@@ -1,0 +1,15 @@
+# Next.js
+.next/
+out/
+node_modules/
+
+# Env
+.env.local
+.env*.local
+
+# Data files (keep public/data/*.json in repo after running analyze.py)
+1962__*.csv
+
+# OS
+.DS_Store
+Thumbs.db

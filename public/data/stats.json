@@ -1,0 +1,12 @@
+{
+  "totalDays": 21623,
+  "dataStartYear": 1966,
+  "dataEndYear": 2026,
+  "allTimeMaxTemp": 30.5,
+  "allTimeMinTemp": -1.2,
+  "avgAnnualRainfall": 1091.0,
+  "avgAnnualMaxTemp": 19.1,
+  "avgAnnualMinTemp": 12.0,
+  "hottestMonth": "Feb",
+  "wettestMonth": "Jul"
+}
