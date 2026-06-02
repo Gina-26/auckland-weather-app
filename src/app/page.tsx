@@ -5,32 +5,23 @@ import YearlyTrendChart from '@/components/charts/YearlyTrendChart';
 import RainfallBarChart from '@/components/charts/RainfallBarChart';
 import type { WeatherStats, MonthlyAverage, YearlyTrend } from '@/types';
 
-async function loadData<T>(file: string): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/data/${file}`, { next: { revalidate: 86400 } });
-  if (!res.ok) throw new Error(`Failed to load ${file}`);
-  return res.json();
+let stats: WeatherStats | null = null;
+let monthly: MonthlyAverage | null = null;
+let yearly: YearlyTrend | null = null;
+
+try {
+  stats  = require('../../public/data/stats.json')           as WeatherStats;
+  monthly = require('../../public/data/monthly_averages.json') as MonthlyAverage;
+  yearly  = require('../../public/data/yearly_trends.json')    as YearlyTrend;
+} catch {
+  // data not yet generated — show placeholder
 }
 
 function ChartSkeleton() {
   return <div className="skeleton h-80 w-full" />;
 }
 
-export default async function DashboardPage() {
-  let stats: WeatherStats | null = null;
-  let monthly: MonthlyAverage | null = null;
-  let yearly: YearlyTrend | null = null;
-
-  try {
-    [stats, monthly, yearly] = await Promise.all([
-      loadData<WeatherStats>('stats.json'),
-      loadData<MonthlyAverage>('monthly_averages.json'),
-      loadData<YearlyTrend>('yearly_trends.json'),
-    ]);
-  } catch {
-    // data not generated yet
-  }
-
+export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="text-center space-y-2 fade-in">
@@ -47,7 +38,7 @@ export default async function DashboardPage() {
           <StatCard
             icon="🌡️" label="年均最高温" accent="purple"
             value={`${stats.avgAnnualMaxTemp}°C`}
-            sub={`最高纪录 ${stats.allTimeMaxTemp}°C`}
+            sub={`历史最高 ${stats.allTimeMaxTemp}°C`}
           />
           <StatCard
             icon="💧" label="年均降雨量" accent="cyan"
@@ -57,10 +48,10 @@ export default async function DashboardPage() {
           <StatCard
             icon="☀️" label="最热月份" accent="orange"
             value={stats.hottestMonth}
-            sub={`夏季均温 ${stats.avgAnnualMaxTemp + 4}°C`}
+            sub="南半球夏末最热"
           />
           <StatCard
-            icon="❄️" label="最低纪录" accent="green"
+            icon="❄️" label="历史最低温" accent="green"
             value={`${stats.allTimeMinTemp}°C`}
             sub={`年均最低 ${stats.avgAnnualMinTemp}°C`}
           />
@@ -91,15 +82,15 @@ export default async function DashboardPage() {
           <div className="grid sm:grid-cols-3 gap-4 text-sm text-white/50">
             <div>
               <span className="text-white/70 font-medium">数据来源</span>
-              <p className="mt-1">新西兰国家气象局（NIWA）奥克兰观测站</p>
+              <p className="mt-1">新西兰国家气象局（NIWA）奥克兰气象站</p>
             </div>
             <div>
               <span className="text-white/70 font-medium">分析方法</span>
               <p className="mt-1">Python + Pandas 数据清洗，scikit-learn 季节性回归模型</p>
             </div>
             <div>
-              <span className="text-white/70 font-medium">预测模型</span>
-              <p className="mt-1">基于傅里叶特征的线性/逻辑回归，捕捉年度季节性规律</p>
+              <span className="text-white/70 font-medium">预测精度</span>
+              <p className="mt-1">温度模型 R²=0.76，降雨分类准确率 66.2%</p>
             </div>
           </div>
         </div>
