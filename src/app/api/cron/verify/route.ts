@@ -14,12 +14,10 @@ function calcPoints(
 }
 
 export async function GET(req: NextRequest) {
-  // Allow Vercel cron scheduler OR a manual bearer token for testing
+  // Vercel cron scheduler sends x-vercel-cron: 1 automatically
   const isVercelCron = req.headers.get('x-vercel-cron') === '1';
-  const secret = process.env.CRON_SECRET ?? '';
-  const auth = req.headers.get('authorization') ?? '';
-  if (!isVercelCron && (!secret || auth !== `Bearer ${secret}`)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isVercelCron) {
+    return NextResponse.json({ error: 'Unauthorized — cron only' }, { status: 401 });
   }
 
   const db    = getAdminClient();
