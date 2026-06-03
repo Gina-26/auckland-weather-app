@@ -1,150 +1,176 @@
-# 🌤️ Auckland Weather — 奥克兰天气分析 + 猜天气游戏
+# 🌤️ Auckland Weather
 
-> 60年奥克兰气象数据分析 + 每日互动猜天气游戏，全栈数据科学项目作品集
+> A full-stack weather data science project — 60 years of Auckland climate analysis, interactive charts, ML seasonal predictions, and a daily weather guessing game.
 
-**Live Demo** · [GitHub](https://github.com/your-username/auckland-weather-app)
+**[Live Demo](https://auckland-weather-app.vercel.app)** · **[GitHub](https://github.com/Gina-26/auckland-weather-app)**
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green) ![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)
 
 ---
 
-## 功能特性
+## Features
 
-### 📊 数据分析仪表盘
-- **60年历史数据**：1966—2026 年奥克兰逐日最高/最低温度 + 降雨量
-- **交互式图表**（Recharts）：月均气温折线图、60年趋势、月均降雨量柱状图
-- **AI 季节预测**：基于傅里叶特征的线性回归模型，R² = 0.76
+### 📊 Analysis Dashboard
+- **Live 30-day data** — fetched daily from the Open-Meteo ERA5 archive API (real observations, not predictions)
+- **Human vs AI** — compare community prediction accuracy against a trained ML seasonal model
+- **60-year historical archive** — NIWA Auckland station data from 1966 to 2026
+- **Interactive charts** (Recharts) — monthly temperature, 60-year trend, rainfall & rain probability
+- **Seasonal ML model** — Fourier-feature linear regression (R² = 0.76) and logistic rain classifier (66.2% accuracy)
 
-### 🎮 猜天气游戏
-- 每天预测明天奥克兰最高温度（滑块选择）和是否下雨
-- 次日通过 Open-Meteo 气象档案 API 自动验证并计算积分
-- **积分规则**：温度差 ≤1°C → +20分 | ≤2°C → +10分 | ≤3°C → +5分 | 降雨猜对 → +10分 | 双中奖励 → +5分
+### 🎮 Daily Guess Game
+- Predict tomorrow's Auckland maximum temperature (slider) and whether it will rain
+- Results verified automatically the next day via Open-Meteo archive data — no manual input
+- Personal accuracy stats vs the AI model: rain prediction % and average temperature error
+- Leaderboard of top 10 players
 
-### 🛒 头像商店
-- 9款专属天气主题 emoji 头像（🌤️⛅🌧️⛈️🌈🌊🌋⭐🦄）
-- 用游戏积分兑换，购买后永久拥有
-- 实时积分排行榜（Top 10）
+**Scoring:**
+
+| Condition | Points |
+|-----------|--------|
+| Temp within ±1°C | +20 |
+| Temp within ±2°C | +10 |
+| Temp within ±3°C | +5 |
+| Rain prediction correct | +10 |
+| Both correct (double hit) | +5 bonus |
+
+### 🏆 Avatar Shop
+- 9 weather-themed emoji avatars, from free to 2,000 pts
+- Unlocked permanently with game points
+- Active avatar shown on leaderboard
 
 ---
 
-## 技术栈
+## Tech Stack
 
-| 层级 | 技术 |
-|------|------|
-| 前端 | Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 |
-| 图表 | Recharts v3 |
-| 数据分析 | Python · Pandas · scikit-learn |
-| 后端 | Next.js API Routes · Supabase (PostgreSQL) |
-| 天气 API | Open-Meteo（免费，无需 API Key） |
-| 部署 | Vercel |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 |
+| Charts | Recharts v3 |
+| Data Analysis | Python · Pandas · scikit-learn |
+| Backend | Next.js API Routes · Supabase (PostgreSQL) |
+| Weather API | Open-Meteo — forecast + ERA5 archive (free, no API key) |
+| Automation | Vercel Cron Jobs — daily auto-verification at 1 AM NZT |
+| Deployment | Vercel (ISR, revalidates hourly) |
 
 ---
 
-## 本地开发
+## Getting Started
 
-### 前置条件
+### Prerequisites
 - Node.js 18+
-- Python 3.10+（带 Anaconda 或手动安装 pandas/sklearn）
+- Python 3.10+ with pandas and scikit-learn
 
-### 1. 克隆项目
+### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/auckland-weather-app.git
+git clone https://github.com/Gina-26/auckland-weather-app.git
 cd auckland-weather-app
 ```
 
-### 2. 运行 Python 数据分析（首次必做）
+### 2. Run the Python data analysis (first time only)
 ```bash
-# 将原始 CSV 文件放到项目根目录上一级，或修改 analyze.py 中的路径
+# Place the NIWA CSV files one directory above the project root, or update paths in analyze.py
 cd data
 python analyze.py
-# 生成 public/data/ 下的 4 个 JSON 文件
+# Generates 4 JSON files in public/data/
 ```
 
-### 3. 配置环境变量
+### 3. Configure environment variables
 ```bash
 cp .env.local.example .env.local
-# 编辑 .env.local，填入 Supabase 凭据
+# Fill in your Supabase credentials
 ```
 
-### 4. 配置 Supabase
-1. 在 [app.supabase.com](https://app.supabase.com) 创建新项目
-2. 在 SQL Editor 中执行 `supabase/schema.sql`
-3. 将项目 URL 和 Key 填入 `.env.local`
+### 4. Set up Supabase
+1. Create a project at [app.supabase.com](https://app.supabase.com)
+2. Run `supabase/schema.sql` in the SQL Editor
+3. Copy your project URL and anon key into `.env.local`
 
-### 5. 安装依赖并启动
+### 5. Install dependencies and run
 ```bash
 npm install
 npm run dev
-# 访问 http://localhost:3000
+# Open http://localhost:3000
 ```
 
 ---
 
-## 数据说明
+## Data
 
-数据来源：新西兰国家气象局（NIWA）奥克兰气象站
+**Source:** NIWA Auckland weather station
 
-| 文件 | 内容 | 时间范围 |
-|------|------|----------|
-| `1962__Temperature__daily.csv` | 逐日最高/最低/平均气温 | 1966—2026 |
-| `1962__Rain__daily.csv` | 逐日降雨量（mm） | 1962—2026 |
+| File | Contents | Date Range |
+|------|----------|------------|
+| `1962__Temperature__daily.csv` | Daily max / min / mean temperature | 1966–2026 |
+| `1962__Rain__daily.csv` | Daily rainfall (mm) | 1962–2026 |
 
-### 生成的 JSON 文件
+**Generated JSON files** (committed to repo, produced by `data/analyze.py`):
 ```
 public/data/
-├── stats.json            # 全局统计（极值、均值、最热/最湿月等）
-├── monthly_averages.json # 月均数据 + AI预测
-├── yearly_trends.json    # 逐年均值趋势
-└── model.json            # ML 模型元数据
+├── stats.json             # Summary statistics (records, averages, hottest/wettest month)
+├── monthly_averages.json  # Monthly averages + ML predictions
+├── yearly_trends.json     # Annual average trends
+└── model.json             # ML model metadata (R², accuracy)
 ```
 
-### 模型训练
-- **温度预测**：以 day-of-year 的傅里叶基（sin/cos）为特征，线性回归，R² = 0.76
-- **降雨预测**：同特征，逻辑回归，准确率 = 66.2%
+**ML models:**
+- **Temperature** — linear regression with sin/cos day-of-year Fourier features · R² = 0.76
+- **Rainfall** — logistic regression with same features · accuracy = 66.2%
+
+**Live data pipeline:**
+- Recent 30-day chart fetches from Open-Meteo ERA5 archive (real observations)
+- Game scoring uses the same archive API — never forecast/predicted data
+- Vercel Cron runs at 13:00 UTC daily (≈ 1 AM NZT) to verify all pending guesses
 
 ---
 
-## 部署到 Vercel
+## Deployment
 
 ```bash
 npm install -g vercel
 vercel --prod
 ```
 
-在 Vercel Dashboard 配置以下环境变量：
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_BASE_URL`（填写 Vercel 分配的域名，如 `https://auckland-weather-app.vercel.app`）
+Set the following environment variables in the Vercel dashboard:
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (optional, falls back to anon) |
 
 ---
 
-## 项目结构
+## Project Structure
+
 ```
 auckland-weather-app/
 ├── data/
-│   ├── analyze.py          # Python 数据分析 + ML 训练脚本
+│   ├── analyze.py              # Python analysis + ML training script
 │   └── requirements.txt
-├── public/data/            # Python 生成的 JSON（提交到 Git）
+├── public/data/                # Pre-generated JSON (committed)
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx        # 数据分析仪表盘
-│   │   ├── game/page.tsx   # 猜天气游戏
-│   │   ├── shop/page.tsx   # 头像商店
-│   │   └── api/            # Next.js API 路由
+│   │   ├── page.tsx            # Analysis dashboard (ISR, revalidates hourly)
+│   │   ├── game/page.tsx       # Daily Guess game
+│   │   ├── shop/page.tsx       # Avatar shop
+│   │   └── api/
+│   │       ├── weather/        # Open-Meteo forecast endpoint
+│   │       ├── game/           # Profile, guess, verify, leaderboard, stats, shop
+│   │       └── cron/verify/    # Automated daily verification (Vercel Cron)
 │   ├── components/
-│   │   ├── charts/         # Recharts 图表组件
-│   │   ├── game/           # 游戏 UI 组件
-│   │   └── ui/             # 通用组件（Navbar, StatCard）
+│   │   ├── charts/             # Recharts components (seasonal, yearly, rainfall, recent)
+│   │   ├── game/               # GuessForm, ResultCard, Leaderboard
+│   │   └── ui/                 # Navbar, StatCard
 │   ├── lib/
-│   │   ├── supabase.ts     # Supabase 客户端
-│   │   └── openmeteo.ts    # Open-Meteo API 封装
+│   │   ├── supabase.ts         # Supabase client
+│   │   └── openmeteo.ts        # Open-Meteo API wrapper
 │   └── types/index.ts
-└── supabase/schema.sql     # 数据库 DDL + 头像种子数据
+├── supabase/schema.sql         # Database DDL + avatar seed data
+└── vercel.json                 # Cron job schedule
 ```
 
 ---
 
-## 开源协议
+## License
 
 MIT
