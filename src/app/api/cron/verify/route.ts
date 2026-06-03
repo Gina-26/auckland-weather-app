@@ -14,16 +14,15 @@ function calcPoints(
 }
 
 export async function GET(req: NextRequest) {
-  // Vercel cron scheduler sends x-vercel-cron: 1 automatically
   const isVercelCron = req.headers.get('x-vercel-cron') === '1';
-  if (!isVercelCron) {
-    return NextResponse.json({ error: 'Unauthorized — cron only' }, { status: 401 });
-  }
+  if (!isVercelCron)
+    return NextResponse.json({ error: 'Unauthorised — cron only' }, { status: 401 });
 
   const db    = getAdminClient();
   const today = getNZDateString(0);
+  // Guesses older than 7 days with no archive data are permanently marked failed
+  const cutoff = getNZDateString(-7);
 
-  // 1 — fetch every unverified guess whose target date has passed
   const { data: guesses, error } = await db
     .from('game_guesses')
     .select('id, user_id, target_date, temp_guess, rain_guess')
@@ -33,44 +32,55 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!guesses || guesses.length === 0)
-    return NextResponse.json({ verified: 0, message: 'Nothing to verify' });
+    return NextResponse.json({ verified: 0, failed: 0, message: 'Nothing to verify' });
 
-  // 2 — deduplicate dates and fetch actual weather once per date
+  // Deduplicate dates, fetch archive weather once per date
   const uniqueDates = [...new Set(guesses.map(g => g.target_date))] as string[];
   const weatherCache = new Map<string, Awaited<ReturnType<typeof getHistoricalDay>>>();
-  await Promise.all(
-    uniqueDates.map(async date => {
-      const w = await getHistoricalDay(date);
-      weatherCache.set(date, w);
-    }),
-  );
+  await Promise.all(uniqueDates.map(async date => {
+    weatherCache.set(date, await getHistoricalDay(date));
+  }));
 
-  // 3 — score each guess; accumulate per-user deltas
   type UserDelta = { points: number; total: number; correct: number };
   const userDeltas = new Map<string, UserDelta>();
   let verifiedCount = 0;
+  let failedCount   = 0;
 
   for (const guess of guesses) {
     const actual = weatherCache.get(guess.target_date);
-    if (!actual) continue; // archive not yet available — skip, retry tomorrow
+    const uid = guess.user_id as string;
+
+    if (!actual) {
+      // If the guess is older than 7 days the archive should definitely have it.
+      // Mark as permanently unverifiable (0 pts) so it stops blocking the queue.
+      if ((guess.target_date as string) < cutoff) {
+        await db.from('game_guesses').update({
+          is_verified: true,
+          actual_temp: null, actual_rain: null,
+          temp_points: 0, rain_points: 0, bonus_points: 0,
+        }).eq('id', guess.id);
+
+        // Count the attempt but award no points
+        const prev = userDeltas.get(uid) ?? { points: 0, total: 0, correct: 0 };
+        userDeltas.set(uid, { ...prev, total: prev.total + 1 });
+        failedCount++;
+      }
+      // Otherwise: data not yet in archive — leave unverified, retry tomorrow
+      continue;
+    }
 
     const actualRain = actual.rainfall > 1;
     const { tempPoints, rainPoints, bonusPoints } = calcPoints(
-      Number(guess.temp_guess), actual.maxTemp,
-      Boolean(guess.rain_guess), actualRain,
+      Number(guess.temp_guess), actual.maxTemp, Boolean(guess.rain_guess), actualRain,
     );
     const earned = tempPoints + rainPoints + bonusPoints;
 
     await db.from('game_guesses').update({
-      actual_temp:  actual.maxTemp,
-      actual_rain:  actualRain,
-      temp_points:  tempPoints,
-      rain_points:  rainPoints,
-      bonus_points: bonusPoints,
-      is_verified:  true,
+      actual_temp: actual.maxTemp, actual_rain: actualRain,
+      temp_points: tempPoints, rain_points: rainPoints, bonus_points: bonusPoints,
+      is_verified: true,
     }).eq('id', guess.id);
 
-    const uid = guess.user_id as string;
     const prev = userDeltas.get(uid) ?? { points: 0, total: 0, correct: 0 };
     userDeltas.set(uid, {
       points:  prev.points + earned,
@@ -80,13 +90,12 @@ export async function GET(req: NextRequest) {
     verifiedCount++;
   }
 
-  // 4 — update each player's profile atomically
+  // Update each player's profile
   for (const [uid, delta] of userDeltas) {
     const { data: p } = await db
       .from('game_profiles')
       .select('score, total_guesses, correct_guesses')
-      .eq('id', uid)
-      .single();
+      .eq('id', uid).single();
     if (!p) continue;
     await db.from('game_profiles').update({
       score:           p.score + delta.points,
@@ -97,6 +106,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     verified: verifiedCount,
+    failed:   failedCount,
     players:  userDeltas.size,
     dates:    uniqueDates,
   });

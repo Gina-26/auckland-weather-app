@@ -2,13 +2,15 @@
 import { useState, useEffect } from 'react';
 import type { GameAvatar, GameProfile } from '@/types';
 
-const UID_KEY = 'weathergame_uid';
+const UID_KEY   = 'weathergame_uid';
+const TOKEN_KEY = 'weathergame_token';
 
 export default function ShopPage() {
   const [avatars, setAvatars]   = useState<GameAvatar[]>([]);
   const [unlocked, setUnlocked] = useState<number[]>([]);
   const [profile, setProfile]   = useState<GameProfile | null>(null);
   const [userId, setUserId]     = useState<string | null>(null);
+  const [token, setToken]       = useState<string>('');
   const [loading, setLoading]   = useState(true);
   const [busy, setBusy]         = useState<number | null>(null);
   const [msg, setMsg]           = useState('');
@@ -16,7 +18,9 @@ export default function ShopPage() {
 
   useEffect(() => {
     const uid = localStorage.getItem(UID_KEY);
+    const tok = localStorage.getItem(TOKEN_KEY) ?? '';
     setUserId(uid);
+    setToken(tok);
     Promise.all([
       fetch(uid ? `/api/game/shop?user_id=${uid}` : '/api/game/shop').then(r => r.json()),
       uid ? fetch(`/api/game/profile?id=${uid}`).then(r => r.json()) : Promise.resolve(null),
@@ -32,7 +36,8 @@ export default function ShopPage() {
     if (!userId) return;
     setBusy(a.id); setMsg(''); setIsErr(false);
     const r = await fetch('/api/game/shop', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-session-token': token },
       body: JSON.stringify({ user_id: userId, avatar_id: a.id }),
     });
     const data = await r.json();

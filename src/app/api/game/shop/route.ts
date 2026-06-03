@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminClient } from '@/lib/supabase';
+import { authoriseRequest } from '@/lib/auth';
 
-// Avatar copy lives here — the DB rows can't be updated via anon key (no UPDATE RLS policy)
 const AVATAR_COPY: Record<number, { name: string; description: string }> = {
   1: { name: 'Partly Cloudy',  description: "The default — just like Auckland's ever-changing skies." },
   2: { name: 'Overcast',       description: 'Clouds thickening, but light still breaking through.' },
@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { user_id, avatar_id } = await req.json();
   if (!user_id || !avatar_id) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+  if (!authoriseRequest(req, user_id))
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
 
   const db = getAdminClient();
   const { data: avatar } = await db.from('game_avatars').select('*').eq('id', avatar_id).single();

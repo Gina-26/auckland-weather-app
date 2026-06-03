@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminClient } from '@/lib/supabase';
+import { generateToken, authoriseRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
@@ -30,12 +31,17 @@ export async function POST(req: NextRequest) {
   }
 
   await db.from('user_avatars').insert({ user_id: data.id, avatar_id: 1 });
-  return NextResponse.json({ profile: data }, { status: 201 });
+
+  // Issue a session token bound to this profile's UUID
+  const token = generateToken(data.id);
+  return NextResponse.json({ profile: data, token }, { status: 201 });
 }
 
 export async function PUT(req: NextRequest) {
   const { user_id, avatar_emoji } = await req.json();
   if (!user_id) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+  if (!authoriseRequest(req, user_id))
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
 
   const db = getAdminClient();
   const { data, error } = await db

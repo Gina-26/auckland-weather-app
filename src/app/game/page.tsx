@@ -5,7 +5,8 @@ import ResultCard from '@/components/game/ResultCard';
 import Leaderboard from '@/components/game/Leaderboard';
 import type { GameProfile, GameGuess, ForecastDay, LeaderboardEntry } from '@/types';
 
-const UID_KEY = 'weathergame_uid';
+const UID_KEY   = 'weathergame_uid';
+const TOKEN_KEY = 'weathergame_token';
 const AI_RAIN_ACC  = 66.2;
 const AI_TEMP_RMSE = 2.3; // approx seasonal model error in °C
 
@@ -160,6 +161,7 @@ function ForecastStrip({ days }: { days: ForecastDay[] }) {
 
 export default function GamePage() {
   const [userId, setUserId]             = useState<string | null>(null);
+  const [token, setToken]               = useState<string>('');
   const [profile, setProfile]           = useState<GameProfile | null>(null);
   const [userStats, setUserStats]       = useState<UserStats | null>(null);
   const [todayGuess, setTodayGuess]     = useState<GameGuess | null>(null);
@@ -192,23 +194,26 @@ export default function GamePage() {
     if (r.ok) setYestGuess((await r.json()).guess);
   }, []);
 
-  const verify = useCallback(async (uid: string) => {
+  const verify = useCallback(async (uid: string, tok: string) => {
     await fetch('/api/game/verify', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-session-token': tok },
       body: JSON.stringify({ user_id: uid }),
     });
   }, []);
 
   useEffect(() => {
     const uid = localStorage.getItem(UID_KEY);
+    const tok = localStorage.getItem(TOKEN_KEY) ?? '';
     setUserId(uid);
+    setToken(tok);
     const common = [
       fetch('/api/weather/forecast').then(r => r.json()).then(d => setForecast(d.days ?? [])),
       fetch('/api/game/leaderboard').then(r => r.json()).then(d => setLeaders(d.leaderboard ?? [])),
     ];
     if (uid) {
       Promise.all([
-        verify(uid), fetchProfile(uid), fetchTodayGuess(uid), fetchYestGuess(uid), ...common,
+        verify(uid, tok), fetchProfile(uid), fetchTodayGuess(uid), fetchYestGuess(uid), ...common,
       ]).then(() => {
         fetchProfile(uid);
         fetchYestGuess(uid);
@@ -230,15 +235,18 @@ export default function GamePage() {
     const data = await r.json();
     if (!r.ok) { setCreateErr(data.error ?? 'Failed to create profile'); setIsCreating(false); return; }
     const uid = data.profile.id;
+    const tok = data.token as string;
     localStorage.setItem(UID_KEY, uid);
-    setUserId(uid); setProfile(data.profile); setIsCreating(false);
+    localStorage.setItem(TOKEN_KEY, tok);
+    setUserId(uid); setToken(tok); setProfile(data.profile); setIsCreating(false);
   }
 
   async function handleSubmitGuess(tempGuess: number, rainGuess: boolean) {
     if (!userId) return;
     setIsSubmitting(true);
     const r = await fetch('/api/game/guess', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-session-token': token },
       body: JSON.stringify({ user_id: userId, temp_guess: tempGuess, rain_guess: rainGuess }),
     });
     if (r.ok) setTodayGuess((await r.json()).guess);
