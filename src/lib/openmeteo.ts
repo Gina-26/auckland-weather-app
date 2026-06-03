@@ -36,8 +36,27 @@ export async function getHistoricalDay(date: string): Promise<DayForecast | null
   };
 }
 
+/** Fetch the last `days` days of archive data (ends yesterday). */
+export async function getRecentDays(days: number): Promise<DayForecast[]> {
+  const end   = getNZDateString(-1);   // yesterday — archive is always available
+  const start = getNZDateString(-days);
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=${TZ}`;
+  const res = await fetch(url, { next: { revalidate: 86400 } });
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!data.daily?.time) return [];
+  return (data.daily.time as string[]).map((date, i) => ({
+    date,
+    maxTemp: Math.round((data.daily.temperature_2m_max[i] ?? 0) * 10) / 10,
+    minTemp: Math.round((data.daily.temperature_2m_min[i] ?? 0) * 10) / 10,
+    rainfall: Math.round((data.daily.precipitation_sum[i] ?? 0) * 10) / 10,
+  }));
+}
+
 export function getNZDateString(offsetDays = 0): string {
-  const nzStr = new Date().toLocaleString('en-CA', { timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const nzStr = new Date().toLocaleString('en-CA', {
+    timeZone: 'Pacific/Auckland', year: 'numeric', month: '2-digit', day: '2-digit',
+  });
   const d = new Date(nzStr);
   d.setDate(d.getDate() + offsetDays);
   return d.toISOString().split('T')[0];
