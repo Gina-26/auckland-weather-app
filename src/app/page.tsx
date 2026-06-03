@@ -10,87 +10,86 @@ let monthly: MonthlyAverage | null = null;
 let yearly: YearlyTrend | null = null;
 
 try {
-  stats  = require('../../public/data/stats.json')           as WeatherStats;
+  stats  = require('../../public/data/stats.json')            as WeatherStats;
   monthly = require('../../public/data/monthly_averages.json') as MonthlyAverage;
   yearly  = require('../../public/data/yearly_trends.json')    as YearlyTrend;
-} catch {
-  // data not yet generated — show placeholder
-}
-
-function ChartSkeleton() {
-  return <div className="skeleton h-80 w-full" />;
-}
+} catch { /* data not yet generated */ }
 
 export default function DashboardPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <div className="text-center space-y-2 fade-in">
-        <h1 className="text-4xl md:text-5xl font-bold gradient-text">奥克兰天气档案</h1>
-        <p className="text-white/50 text-lg">
+    <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+
+      {/* ── Hero ── */}
+      <div className="fade-in">
+        <p className="wx-label mb-2">Climate Data Archive</p>
+        <h1
+          className="text-4xl md:text-5xl font-bold leading-tight mb-3"
+          style={{ letterSpacing: '-0.03em' }}
+        >
+          Auckland Weather
+        </h1>
+        <p className="text-base max-w-xl" style={{ color: 'rgba(255,255,255,0.52)' }}>
           {stats
-            ? `${stats.dataStartYear}—${stats.dataEndYear}  ·  ${stats.totalDays.toLocaleString()} 天气象数据`
-            : '60年奥克兰气象数据分析'}
+            ? `${stats.dataStartYear}–${stats.dataEndYear} · ${stats.totalDays.toLocaleString()} daily observations from the NIWA Auckland station`
+            : '60 years of daily observations from the NIWA Auckland station'}
         </p>
+        <hr className="wx-divider mt-6" />
       </div>
 
+      {/* ── Stats ── */}
       {stats ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            icon="🌡️" label="年均最高温" accent="purple"
+          <StatCard icon="🌡️" label="Avg Daily High" accent="blue"
             value={`${stats.avgAnnualMaxTemp}°C`}
-            sub={`历史最高 ${stats.allTimeMaxTemp}°C`}
-          />
-          <StatCard
-            icon="💧" label="年均降雨量" accent="cyan"
-            value={`${stats.avgAnnualRainfall}mm`}
-            sub={`最湿月份：${stats.wettestMonth}`}
-          />
-          <StatCard
-            icon="☀️" label="最热月份" accent="orange"
+            sub={`Record: ${stats.allTimeMaxTemp}°C`} />
+          <StatCard icon="💧" label="Annual Rainfall" accent="teal"
+            value={`${stats.avgAnnualRainfall} mm`}
+            sub={`Wettest: ${stats.wettestMonth}`} />
+          <StatCard icon="☀️" label="Hottest Month" accent="orange"
             value={stats.hottestMonth}
-            sub="南半球夏末最热"
-          />
-          <StatCard
-            icon="❄️" label="历史最低温" accent="green"
+            sub="Southern Hemisphere summer" />
+          <StatCard icon="❄️" label="Record Low" accent="green"
             value={`${stats.allTimeMinTemp}°C`}
-            sub={`年均最低 ${stats.avgAnnualMinTemp}°C`}
-          />
+            sub={`Avg Low: ${stats.avgAnnualMinTemp}°C`} />
         </div>
       ) : (
-        <div className="glass-card p-8 text-center">
-          <p className="text-white/50 text-lg mb-2">数据文件尚未生成</p>
-          <p className="text-white/30 text-sm">请先运行 <code className="bg-white/10 px-2 py-0.5 rounded">cd data && python analyze.py</code></p>
+        <div className="glass-card p-10 text-center">
+          <p className="text-white/50 mb-2">Data not yet generated</p>
+          <code className="text-xs text-white/30 bg-white/8 px-2 py-1 rounded">cd data && python analyze.py</code>
         </div>
       )}
 
+      {/* ── Charts row ── */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          {monthly ? <SeasonalChart data={monthly} /> : <div className="skeleton h-80 w-full" />}
+        <Suspense fallback={<div className="skeleton h-80" />}>
+          {monthly ? <SeasonalChart data={monthly} /> : <div className="skeleton h-80" />}
         </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {yearly ? <YearlyTrendChart data={yearly} /> : <div className="skeleton h-80 w-full" />}
+        <Suspense fallback={<div className="skeleton h-80" />}>
+          {yearly ? <YearlyTrendChart data={yearly} /> : <div className="skeleton h-80" />}
         </Suspense>
       </div>
 
-      <Suspense fallback={<ChartSkeleton />}>
-        {monthly ? <RainfallBarChart data={monthly} /> : <div className="skeleton h-80 w-full" />}
+      {/* ── Rainfall chart ── */}
+      <Suspense fallback={<div className="skeleton h-80" />}>
+        {monthly ? <RainfallBarChart data={monthly} /> : <div className="skeleton h-80" />}
       </Suspense>
 
+      {/* ── Data note ── */}
       {stats && (
         <div className="glass-card p-6 fade-in">
-          <h3 className="text-base font-bold text-white/80 mb-3">关于这份数据</h3>
-          <div className="grid sm:grid-cols-3 gap-4 text-sm text-white/50">
+          <p className="wx-label mb-3">Methodology</p>
+          <div className="grid sm:grid-cols-3 gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.48)' }}>
             <div>
-              <span className="text-white/70 font-medium">数据来源</span>
-              <p className="mt-1">新西兰国家气象局（NIWA）奥克兰气象站</p>
+              <div className="font-semibold text-white/70 mb-1">Data Source</div>
+              NIWA Auckland station — daily temperature highs, lows, and rainfall since 1962.
             </div>
             <div>
-              <span className="text-white/70 font-medium">分析方法</span>
-              <p className="mt-1">Python + Pandas 数据清洗，scikit-learn 季节性回归模型</p>
+              <div className="font-semibold text-white/70 mb-1">Processing</div>
+              Python + Pandas for cleaning and aggregation. Missing values excluded, not imputed.
             </div>
             <div>
-              <span className="text-white/70 font-medium">预测精度</span>
-              <p className="mt-1">温度模型 R²=0.76，降雨分类准确率 66.2%</p>
+              <div className="font-semibold text-white/70 mb-1">Seasonal Model</div>
+              Fourier-feature linear regression (R²&nbsp;=&nbsp;0.76) and logistic classifier (66% accuracy) trained on day-of-year.
             </div>
           </div>
         </div>

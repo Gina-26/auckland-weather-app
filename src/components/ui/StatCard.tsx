@@ -3,26 +3,39 @@ interface StatCardProps {
   label: string;
   value: string;
   sub?: string;
-  accent?: 'purple' | 'cyan' | 'green' | 'orange' | 'rose';
+  accent?: 'blue' | 'teal' | 'green' | 'orange' | 'red';
 }
 
-const ACCENT_MAP: Record<string, string> = {
-  purple: 'from-purple-500/20 to-purple-900/10 border-purple-500/25',
-  cyan:   'from-cyan-500/20 to-cyan-900/10 border-cyan-500/25',
-  green:  'from-emerald-500/20 to-emerald-900/10 border-emerald-500/25',
-  orange: 'from-orange-500/20 to-orange-900/10 border-orange-500/25',
-  rose:   'from-rose-500/20 to-rose-900/10 border-rose-500/25',
+const ACCENT: Record<string, { border: string; glow: string }> = {
+  blue:   { border: 'rgba(117,153,255,0.45)', glow: 'rgba(117,153,255,0.08)' },
+  teal:   { border: 'rgba(87,194,221,0.45)',  glow: 'rgba(87,194,221,0.08)'  },
+  green:  { border: 'rgba(84,187,81,0.45)',   glow: 'rgba(84,187,81,0.08)'   },
+  orange: { border: 'rgba(252,172,40,0.45)',  glow: 'rgba(252,172,40,0.08)'  },
+  red:    { border: 'rgba(239,43,47,0.45)',   glow: 'rgba(239,43,47,0.08)'   },
 };
 
-export default function StatCard({ icon, label, value, sub, accent = 'purple' }: StatCardProps) {
+export default function StatCard({ icon, label, value, sub, accent = 'blue' }: StatCardProps) {
+  const { border, glow } = ACCENT[accent];
   return (
-    <div className={`glass-card p-5 bg-gradient-to-br ${ACCENT_MAP[accent]} fade-in`}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">{icon}</span>
-        <span className="text-xs text-white/55 font-medium uppercase tracking-wide">{label}</span>
+    <div
+      className="fade-in rounded-md p-5 flex flex-col gap-1"
+      style={{
+        background: `rgba(13,28,65,0.75)`,
+        border: `1px solid ${border}`,
+        boxShadow: `inset 0 0 40px ${glow}`,
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-lg">{icon}</span>
+        <span className="wx-label">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
-      {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
+      <div
+        className="text-3xl font-bold leading-none"
+        style={{ color: '#ffffff', letterSpacing: '-0.03em' }}
+      >
+        {value}
+      </div>
+      {sub && <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.42)' }}>{sub}</div>}
     </div>
   );
 }

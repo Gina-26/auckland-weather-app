@@ -5,50 +5,51 @@ import {
 } from 'recharts';
 import type { MonthlyAverage } from '@/types';
 
-interface Props { data: MonthlyAverage }
-
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: 'rgba(15,12,41,0.92)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    color: '#f0f0f5',
+    background: '#0b1940',
+    border: '1px solid rgba(117,153,255,0.3)',
+    borderRadius: 4,
+    color: '#ffffff',
+    fontSize: 12,
+    fontFamily: "'Open Sans', sans-serif",
   },
-  labelStyle: { color: '#06b6d4', fontWeight: 600 },
+  labelStyle: { color: '#57c2dd', fontWeight: 600, marginBottom: 4 },
+  itemStyle: { color: 'rgba(255,255,255,0.8)' },
 };
 
-export default function RainfallBarChart({ data }: Props) {
+export default function RainfallBarChart({ data }: { data: MonthlyAverage }) {
+  const maxRain = Math.max(...(data.avgRainfall.filter(Boolean) as number[]));
+
   const chartData = data.months.map((month, i) => ({
     month,
-    '月均降雨(mm)': data.avgRainfall[i] ?? 0,
-    '雨天概率(%)': Math.round((data.rainProbability[i] ?? 0) * 100),
+    'Avg Rainfall (mm)': data.avgRainfall[i] ?? 0,
+    'Rain Days (%)':     Math.round((data.rainProbability[i] ?? 0) * 100),
   }));
-
-  const maxRain = Math.max(...(data.avgRainfall.filter(Boolean) as number[]));
 
   return (
     <div className="glass-card p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-bold gradient-text">月均降雨量 & 下雨概率</h3>
-        <p className="text-xs text-white/40 mt-1">奥克兰全年降水分布规律</p>
+      <div className="mb-5">
+        <p className="wx-label mb-1">Precipitation</p>
+        <h3 className="text-base font-bold text-white">Monthly Rainfall & Rain Probability</h3>
+        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          Average millimetres and likelihood of a rainy day by month
+        </p>
       </div>
-      <ResponsiveContainer width="100%" height={280}>
-        <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" vertical={false} />
-          <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
-          <YAxis yAxisId="rain" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} unit="mm" />
-          <YAxis yAxisId="prob" orientation="right" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} unit="%" domain={[0, 100]} />
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={chartData} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+          <XAxis dataKey="month" tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: "'Open Sans'" }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="rain" tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 11 }} unit="mm" axisLine={false} tickLine={false} />
+          <YAxis yAxisId="prob" orientation="right" tick={{ fill: 'rgba(255,255,255,0.45)', fontSize: 11 }} unit="%" axisLine={false} tickLine={false} domain={[0, 100]} />
           <Tooltip {...TOOLTIP_STYLE} />
-          <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }} />
-          <Bar yAxisId="rain" dataKey="月均降雨(mm)" radius={[4, 4, 0, 0]}>
-            {chartData.map((entry, i) => (
-              <Cell
-                key={i}
-                fill={`rgba(6,182,212,${0.3 + 0.6 * (entry['月均降雨(mm)'] / maxRain)})`}
-              />
+          <Legend wrapperStyle={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: "'Open Sans'" }} />
+          <Bar yAxisId="rain" dataKey="Avg Rainfall (mm)" radius={[3, 3, 0, 0]}>
+            {chartData.map((e, i) => (
+              <Cell key={i} fill={`rgba(87,194,221,${0.28 + 0.62 * (e['Avg Rainfall (mm)'] / maxRain)})`} />
             ))}
           </Bar>
-          <Bar yAxisId="prob" dataKey="雨天概率(%)" fill="rgba(167,139,250,0.45)" radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="prob" dataKey="Rain Days (%)" fill="rgba(117,153,255,0.42)" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
