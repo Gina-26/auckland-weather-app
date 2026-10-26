@@ -4,11 +4,14 @@ import GuessForm from '@/components/game/GuessForm';
 import ResultCard from '@/components/game/ResultCard';
 import Leaderboard from '@/components/game/Leaderboard';
 import type { GameProfile, GameGuess, ForecastDay, LeaderboardEntry } from '@/types';
+import modelMeta from '../../../public/data/model.json';
 
 const UID_KEY   = 'weathergame_uid';
 const TOKEN_KEY = 'weathergame_token';
-const AI_RAIN_ACC  = 66.2;
-const AI_TEMP_RMSE = 2.3; // approx seasonal model error in °C
+
+// Held-out accuracy of the improved model (see data/analyze.py → evaluation.json)
+const AI_RAIN_ACC  = Math.round(modelMeta.rainModelAcc * 1000) / 10;
+const AI_TEMP_MAE  = modelMeta.tempModelMae; // average error in °C
 
 interface UserStats {
   total: number;
@@ -53,7 +56,7 @@ function VsAIPanel({ stats }: { stats: UserStats }) {
   const rainAcc = stats.rain_accuracy ?? 0;
   const tempDiff = stats.avg_temp_diff;
   const rainAhead = rainAcc > AI_RAIN_ACC;
-  const tempAhead = tempDiff !== null && tempDiff < AI_TEMP_RMSE;
+  const tempAhead = tempDiff !== null && tempDiff < AI_TEMP_MAE;
 
   return (
     <div className="mt-4 pt-4 space-y-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
@@ -96,7 +99,7 @@ function VsAIPanel({ stats }: { stats: UserStats }) {
               ±{tempDiff}°C
             </span>
             <span className="text-xs ml-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              vs AI ±{AI_TEMP_RMSE}°C
+              vs AI ±{AI_TEMP_MAE}°C
             </span>
           </div>
         </div>

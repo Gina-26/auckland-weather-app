@@ -1,12 +1,13 @@
 {
-  "totalDays": 21623,
+  "dataSource": "Open-Meteo ERA5 reanalysis (Auckland)",
+  "totalDays": 22208,
   "dataStartYear": 1966,
   "dataEndYear": 2026,
-  "allTimeMaxTemp": 30.5,
-  "allTimeMinTemp": -1.2,
-  "avgAnnualRainfall": 1091.0,
-  "avgAnnualMaxTemp": 19.1,
-  "avgAnnualMinTemp": 12.0,
+  "allTimeMaxTemp": 29.1,
+  "allTimeMinTemp": 0.5,
+  "avgAnnualRainfall": 1172.0,
+  "avgAnnualMaxTemp": 18.0,
+  "avgAnnualMinTemp": 12.4,
   "hottestMonth": "Feb",
   "wettestMonth": "Jul"
 }

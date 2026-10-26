@@ -1,0 +1,57 @@
+{
+  "task": "Predict tomorrow's max temperature and whether it will rain (>1 mm)",
+  "trainYears": "1966–2015",
+  "testYears": "2016–2026",
+  "testDays": 3945,
+  "rainBaseRate": 0.402,
+  "temperature": [
+    {
+      "name": "Seasonal average",
+      "description": "Original model: uses only the day of the year",
+      "kind": "original",
+      "mae": 1.47,
+      "r2": 0.733
+    },
+    {
+      "name": "Same as today",
+      "description": "Baseline: tomorrow's high = today's high",
+      "kind": "baseline",
+      "mae": 1.06,
+      "r2": 0.848
+    },
+    {
+      "name": "Season + today's weather",
+      "description": "Improved model: day of year plus today's temperature and rain",
+      "kind": "improved",
+      "mae": 1.0,
+      "r2": 0.869
+    }
+  ],
+  "rain": [
+    {
+      "name": "Always \"no rain\"",
+      "description": "Baseline: never predict rain",
+      "kind": "baseline",
+      "accuracy": 0.598
+    },
+    {
+      "name": "Seasonal average",
+      "description": "Original model: uses only the day of the year",
+      "kind": "original",
+      "accuracy": 0.598
+    },
+    {
+      "name": "Same as today",
+      "description": "Baseline: rain tomorrow if it rained today",
+      "kind": "baseline",
+      "accuracy": 0.666
+    },
+    {
+      "name": "Season + today's weather",
+      "description": "Improved model: day of year plus today's temperature and rain",
+      "kind": "improved",
+      "accuracy": 0.683
+    }
+  ],
+  "originalInSampleR2": 0.8
+}

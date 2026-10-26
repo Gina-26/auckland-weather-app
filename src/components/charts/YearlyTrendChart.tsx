@@ -33,7 +33,7 @@ export default function YearlyTrendChart({ data }: { data: YearlyTrend }) {
         <p className="wx-label mb-1">Long-term Record</p>
         <h3 className="text-base font-bold text-white">60-Year Temperature Trend</h3>
         <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
-          Annual average daily high & low — 1966 to 2024
+          Annual average daily high & low — {data.years[0]} to {data.years[data.years.length - 1]}
         </p>
       </div>
       <ResponsiveContainer width="100%" height={260}>

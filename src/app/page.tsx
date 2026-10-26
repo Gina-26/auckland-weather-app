@@ -4,9 +4,11 @@ import SeasonalChart from '@/components/charts/SeasonalChart';
 import YearlyTrendChart from '@/components/charts/YearlyTrendChart';
 import RainfallBarChart from '@/components/charts/RainfallBarChart';
 import RecentWeatherChart from '@/components/charts/RecentWeatherChart';
+import KeyFindings from '@/components/analysis/KeyFindings';
+import ModelEvaluation from '@/components/analysis/ModelEvaluation';
 import { getRecentDays } from '@/lib/openmeteo';
 import { supabase } from '@/lib/supabase';
-import type { WeatherStats, MonthlyAverage, YearlyTrend } from '@/types';
+import type { WeatherStats, MonthlyAverage, YearlyTrend, Findings, Evaluation } from '@/types';
 import type { DayForecast } from '@/lib/openmeteo';
 
 export const revalidate = 3600; // Refresh every hour (community stats need to stay fresh)
@@ -15,15 +17,21 @@ export const revalidate = 3600; // Refresh every hour (community stats need to s
 let stats: WeatherStats | null = null;
 let monthly: MonthlyAverage | null = null;
 let yearly: YearlyTrend | null = null;
+let findings: Findings | null = null;
+let evaluation: Evaluation | null = null;
 try {
   stats   = require('../../public/data/stats.json')            as WeatherStats;
   monthly = require('../../public/data/monthly_averages.json') as MonthlyAverage;
   yearly  = require('../../public/data/yearly_trends.json')    as YearlyTrend;
+  findings   = require('../../public/data/findings.json')   as Findings;
+  evaluation = require('../../public/data/evaluation.json') as Evaluation;
 } catch { /* run data/analyze.py */ }
 
 // ── AI model constants (from model.json) ────────────────────────────────────
-const AI_RAIN_ACC  = 66.2; // logistic regression accuracy on held-out data
-const AI_TEMP_RMSE = 2.3;  // approximate, derived from R² = 0.76 on seasonal model
+// Improved model, scored on held-out years (see data/analyze.py → evaluation.json)
+const improvedRain = evaluation?.rain.find(m => m.kind === 'improved');
+const improvedTemp = evaluation?.temperature.find(m => m.kind === 'improved');
+const AI_RAIN_ACC  = improvedRain ? Math.round(improvedRain.accuracy * 1000) / 10 : 0;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function liveStats(days: DayForecast[]) {
@@ -87,11 +95,15 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-base max-w-xl" style={{ color: 'rgba(255,255,255,0.52)' }}>
           {stats
-            ? `${stats.dataStartYear}–${stats.dataEndYear} · ${stats.totalDays.toLocaleString()} daily observations from the NIWA Auckland station`
-            : '60 years of daily observations from the NIWA Auckland station'}
+            ? `${stats.dataStartYear}–${stats.dataEndYear} · ${stats.totalDays.toLocaleString()} days of data · ${stats.dataSource ?? 'Open-Meteo ERA5 reanalysis'}`
+            : '60 years of daily Auckland weather data'}
         </p>
         <hr className="wx-divider mt-6" />
       </div>
+
+      {/* ── Analysis: what the data shows ── */}
+      {findings && <KeyFindings f={findings} />}
+      {evaluation && <ModelEvaluation e={evaluation} />}
 
       {/* ── Live: Recent 30 days ── */}
       {recent30.length > 0 && (
@@ -127,7 +139,7 @@ export default async function DashboardPage() {
             <p className="wx-label mb-1">Challenge</p>
             <h2 className="text-xl font-bold text-white">Human vs AI</h2>
             <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
-              Can players out-predict a machine learning seasonal model?
+              Can players out-predict the forecasting model?
             </p>
           </div>
 
@@ -166,7 +178,7 @@ export default async function DashboardPage() {
 
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
                   Player accuracy = predictions where any points were earned.
-                  AI baseline = logistic regression rain-prediction accuracy (66.2%).
+                  AI baseline = improved model's rain accuracy on held-out years ({AI_RAIN_ACC}%).
                 </p>
               </div>
 
@@ -208,7 +220,7 @@ export default async function DashboardPage() {
                 </div>
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    Temp model R² = 0.76 · Rain classifier = 66.2% · Data: ERA5 reanalysis (not predicted)
+                    Temp model ±{improvedTemp?.mae}°C · Rain model {AI_RAIN_ACC}% · tested on {evaluation?.testYears}
                   </p>
                 </div>
               </div>
@@ -260,18 +272,18 @@ export default async function DashboardPage() {
           <div className="grid sm:grid-cols-3 gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.48)' }}>
             <div>
               <div className="font-semibold text-white/70 mb-1">Data Source</div>
-              NIWA Auckland station (historical). Recent data via Open-Meteo ERA5 reanalysis —
-              actual observations from weather stations, satellites, and radiosondes. Not predictions.
+              Open-Meteo ERA5 reanalysis for Auckland, 1966 onwards — a reconstruction of past weather
+              from stations, satellites and weather balloons. Raw CSV is committed in the repo.
             </div>
             <div>
               <div className="font-semibold text-white/70 mb-1">Processing</div>
-              Python + Pandas for historical cleaning. Recent 30-day data fetches automatically
-              every hour. Game scoring uses archive API only, never forecast data.
+              Python + Pandas for cleaning and analysis; trends tested with linear regression on
+              complete years. Recent 30-day data refreshes hourly; game scoring uses archive data only.
             </div>
             <div>
-              <div className="font-semibold text-white/70 mb-1">Seasonal Model</div>
-              Fourier-feature linear regression (R²&nbsp;=&nbsp;0.76) and logistic rain classifier
-              (66.2% accuracy) trained on 60 years of day-of-year data.
+              <div className="font-semibold text-white/70 mb-1">Forecast Model</div>
+              Seasonal (Fourier) features plus today&apos;s weather, trained on {evaluation?.trainYears} and
+              tested on {evaluation?.testYears} against simple baselines.
             </div>
           </div>
         </div>

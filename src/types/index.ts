@@ -15,6 +15,7 @@ export interface YearlyTrend {
 }
 
 export interface WeatherStats {
+  dataSource?: string;
   totalDays: number;
   dataStartYear: number;
   dataEndYear: number;
@@ -81,4 +82,59 @@ export interface LeaderboardEntry {
   score: number;
   total_guesses: number;
   correct_guesses: number;
+}
+
+export interface Trend {
+  perDecade: number;
+  pValue: number;
+  significant: boolean;
+}
+
+export interface DecadeSummary {
+  decade: string;
+  years: number;
+  meanTemp: number;
+  hotDays: number;
+  coldNights: number;
+  rainfall: number;
+  heavyRainDays: number;
+}
+
+export interface Findings {
+  dataSource: string;
+  firstYear: number;
+  lastYear: number;
+  temperatureTrend: Trend & { totalChange: number };
+  hotDaysTrend: Trend;
+  coldNightsTrend: Trend;
+  rainfallTrend: Trend;
+  heavyRainTrend: Trend;
+  hotDays: {
+    firstDecade: string; firstDecadeAvg: number;
+    lastDecade: string; lastDecadeAvg: number; lastDecadeYears: number;
+    ratio: number;
+  };
+  coldNights: { firstDecadeAvg: number; lastDecadeAvg: number };
+  warmestYears: { year: number; meanTemp: number }[];
+  warmestYearsSince2016: number;
+  decades: DecadeSummary[];
+  wettestDays: { date: string; rainfall: number }[];
+  thresholds: { hotDayC: number; coldNightC: number; heavyRainMm: number; rainyDayMm: number };
+}
+
+export interface EvalModel {
+  name: string;
+  description: string;
+  kind: 'original' | 'baseline' | 'improved';
+}
+
+export interface Evaluation {
+  task: string;
+  trainYears: string;
+  testYears: string;
+  testDays: number;
+  rainBaseRate: number;
+  temperature: (EvalModel & { mae: number; r2: number })[];
+  rain: (EvalModel & { accuracy: number })[];
+  originalInSampleR2: number;
 }

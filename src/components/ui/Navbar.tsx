@@ -24,7 +24,7 @@ export default function Navbar() {
               Auckland Weather
             </div>
             <div className="text-[10px] text-white/35 font-normal tracking-wide uppercase">
-              NIWA Station · Est. 1962
+              60 Years of Climate Data
             </div>
           </div>
         </Link>

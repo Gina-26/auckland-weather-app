@@ -1,0 +1,179 @@
+{
+  "dataSource": "Open-Meteo ERA5 reanalysis (Auckland)",
+  "firstYear": 1966,
+  "lastYear": 2025,
+  "temperatureTrend": {
+    "perDecade": 0.18,
+    "pValue": 0.0,
+    "significant": true,
+    "totalChange": 1.06
+  },
+  "hotDaysTrend": {
+    "perDecade": 1.161,
+    "pValue": 0.0122,
+    "significant": true
+  },
+  "coldNightsTrend": {
+    "perDecade": -1.223,
+    "pValue": 0.0005,
+    "significant": true
+  },
+  "rainfallTrend": {
+    "perDecade": -3.417,
+    "pValue": 0.797,
+    "significant": false
+  },
+  "heavyRainTrend": {
+    "perDecade": 0.079,
+    "pValue": 0.1965,
+    "significant": false
+  },
+  "hotDays": {
+    "firstDecade": "1960s",
+    "firstDecadeAvg": 3.8,
+    "lastDecade": "2020s",
+    "lastDecadeAvg": 13.5,
+    "lastDecadeYears": 6,
+    "ratio": 3.6
+  },
+  "coldNights": {
+    "firstDecadeAvg": 13.8,
+    "lastDecadeAvg": 4.7
+  },
+  "warmestYears": [
+    {
+      "year": 2022,
+      "meanTemp": 16.46
+    },
+    {
+      "year": 2025,
+      "meanTemp": 16.26
+    },
+    {
+      "year": 1998,
+      "meanTemp": 16.15
+    },
+    {
+      "year": 2021,
+      "meanTemp": 16.01
+    },
+    {
+      "year": 2016,
+      "meanTemp": 15.93
+    }
+  ],
+  "warmestYearsSince2016": 4,
+  "decades": [
+    {
+      "decade": "1960s",
+      "years": 4,
+      "meanTemp": 14.6,
+      "hotDays": 3.8,
+      "coldNights": 13.8,
+      "rainfall": 1241.0,
+      "heavyRainDays": 1.0
+    },
+    {
+      "decade": "1970s",
+      "years": 10,
+      "meanTemp": 15.07,
+      "hotDays": 6.5,
+      "coldNights": 9.6,
+      "rainfall": 1247.0,
+      "heavyRainDays": 0.5
+    },
+    {
+      "decade": "1980s",
+      "years": 10,
+      "meanTemp": 14.9,
+      "hotDays": 2.9,
+      "coldNights": 8.9,
+      "rainfall": 1155.0,
+      "heavyRainDays": 0.7
+    },
+    {
+      "decade": "1990s",
+      "years": 10,
+      "meanTemp": 14.91,
+      "hotDays": 6.7,
+      "coldNights": 6.5,
+      "rainfall": 1112.0,
+      "heavyRainDays": 0.7
+    },
+    {
+      "decade": "2000s",
+      "years": 10,
+      "meanTemp": 15.12,
+      "hotDays": 4.0,
+      "coldNights": 7.7,
+      "rainfall": 1114.0,
+      "heavyRainDays": 0.4
+    },
+    {
+      "decade": "2010s",
+      "years": 10,
+      "meanTemp": 15.52,
+      "hotDays": 8.2,
+      "coldNights": 5.3,
+      "rainfall": 1079.0,
+      "heavyRainDays": 0.8
+    },
+    {
+      "decade": "2020s",
+      "years": 6,
+      "meanTemp": 15.97,
+      "hotDays": 13.5,
+      "coldNights": 4.7,
+      "rainfall": 1378.0,
+      "heavyRainDays": 1.5
+    }
+  ],
+  "wettestDays": [
+    {
+      "date": "2011-01-29",
+      "rainfall": 124.6
+    },
+    {
+      "date": "2025-07-29",
+      "rainfall": 101.6
+    },
+    {
+      "date": "1969-02-16",
+      "rainfall": 96.1
+    },
+    {
+      "date": "1972-03-08",
+      "rainfall": 90.7
+    },
+    {
+      "date": "2011-01-23",
+      "rainfall": 89.7
+    },
+    {
+      "date": "2023-02-13",
+      "rainfall": 88.1
+    },
+    {
+      "date": "2023-01-27",
+      "rainfall": 83.4
+    },
+    {
+      "date": "1967-02-02",
+      "rainfall": 82.0
+    },
+    {
+      "date": "1985-04-20",
+      "rainfall": 80.4
+    },
+    {
+      "date": "1980-03-15",
+      "rainfall": 77.6
+    }
+  ],
+  "thresholds": {
+    "hotDayC": 25.0,
+    "coldNightC": 5.0,
+    "heavyRainMm": 50.0,
+    "rainyDayMm": 1.0
+  }
+}
