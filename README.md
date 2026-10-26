@@ -1,27 +1,70 @@
-# 🌤️ Auckland Weather
+# 🌤️ Auckland Climate Analysis, 1966–2026
 
-> A full-stack weather data project — 60 years of Auckland climate data, analysed with Python to answer two questions: **Is Auckland getting warmer?** and **Can a simple model predict tomorrow's weather?** Includes an interactive dashboard and a daily weather guessing game.
+**Business question:** How has Auckland's climate changed over the last 60 years, and what should city planners, energy providers and businesses expect now?
 
-**[Live Demo](https://auckland-weather-app.vercel.app)** · **[GitHub](https://github.com/Gina-26/auckland-weather-app)**
+[**Live dashboard**](https://auckland-weather-app.vercel.app) · [**Analysis notebook**](data/analysis.ipynb) · [**SQL queries**](sql/)
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black) ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green) ![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)
+![Python](https://img.shields.io/badge/Python-pandas%20·%20SciPy%20·%20scikit--learn-blue) ![SQL](https://img.shields.io/badge/SQL-PostgreSQL-336791) ![Next.js](https://img.shields.io/badge/Next.js-16-black) ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)
 
 ---
 
-## Key Findings
+## Executive Summary
 
-Data: 22,208 days of Auckland weather, 1966–2026 (Open-Meteo ERA5 reanalysis). Trends use complete years only.
+Analysis of **22,208 days** of Auckland weather shows:
 
-| | 1960s | 2020s | Trend |
-|---|---|---|---|
-| Mean temperature | 14.6 °C | 16.0 °C | **+0.18 °C per decade** (p < 0.001), about +1.1 °C since 1966 |
-| Hot days (≥ 25 °C) per year | 3.8 | 13.5 | **More than tripled** (p = 0.01) |
-| Cold nights (≤ 5 °C) per year | 13.8 | 4.7 | Down by two thirds (p < 0.001) |
-| Annual rainfall | 1,241 mm | 1,378 mm | No significant trend (p = 0.80) |
+1. **Auckland has warmed by about 1.1 °C since 1966** (+0.18 °C per decade, p < 0.001). 4 of the 5 warmest years have happened since 2016.
+2. **Hot days (≥ 25 °C) have more than tripled**, from 3.8 a year in the 1960s to **13.5 a year in the 2020s**, almost all in December–March.
+3. **Cold nights (≤ 5 °C) have fallen by two thirds**, from 13.8 to 4.7 a year.
+4. **Rainfall shows no clear long-term trend** (p = 0.80). Year-to-year variation is far larger than any change.
+5. **My original forecast model was no better than guessing.** Tested properly, it matched "always predict no rain" exactly. An improved model beats it, but only slightly beats "tomorrow = today".
 
-- **4 of the 5 warmest years** on record happened since 2016 (warmest: 2022).
-- **Rain has not clearly changed.** Year-to-year variation is far larger than any long-term trend.
-- **Data limitation:** ERA5 averages weather over a grid cell tens of kilometres wide, so it smooths out local extremes. The record-breaking Auckland Anniversary flood (27 Jan 2023) only ranks #7 in this dataset. It is reliable for long-term temperature trends, not for local extreme rainfall.
+<p align="center">
+  <img src="docs/hot_days_by_decade.png" width="49%" alt="Hot days per year by decade">
+  <img src="docs/temperature_trend.png" width="49%" alt="Auckland average temperature by year">
+</p>
+
+## Recommendations
+
+1. **Plan for hot summers as the new normal.** Planning that assumes around 5 hot days a year (the 20th-century average) is out of date. The 2020s average is 13.5, which matters for cooling in schools, rest homes and rental housing, and for summer staffing and outdoor work.
+2. **Businesses with summer-sensitive demand** (drinks, ice cream, fans, outdoor venues, electricity retailers) should plan stock and capacity around January–February, where hot days are now far more common.
+3. **Don't use this kind of data for flood planning.** Gridded data smooths out extreme downpours: the record-breaking 27 January 2023 flood only ranks #7 here. Flood decisions need local rain-gauge data.
+4. **For day-ahead decisions, use a real weather forecast.** Simple history-based models add little over "tomorrow will be like today".
+
+---
+
+## Dataset
+
+| | |
+|---|---|
+| **Source** | [Open-Meteo](https://open-meteo.com/) historical weather API, ERA5 reanalysis, Auckland (−36.94, 174.78) |
+| **Size** | 22,208 rows, one per day, 1 Jan 1966 – 20 Oct 2026 |
+| **Columns** | daily max / min / mean temperature (°C), daily rainfall (mm) |
+| **File** | [`data/auckland_daily_era5.csv`](data/auckland_daily_era5.csv), committed so every result can be reproduced |
+
+ERA5 combines weather stations, satellites and weather balloons into a consistent grid with no gaps. That makes it reliable for long-term trends, but each grid cell covers tens of kilometres, so very local extremes are smoothed out.
+
+## Data Cleaning & Quality Checks
+
+Checked in both SQL ([`sql/02_data_quality.sql`](sql/02_data_quality.sql)) and Python ([notebook](data/analysis.ipynb), section 2):
+
+| Check | Result |
+|---|---|
+| Missing values | 0 |
+| Duplicate dates / gaps in the calendar | 0 / 0 |
+| Min temp above max, or mean outside min–max | 0 |
+| Negative or impossible rainfall | 0 |
+| Incomplete years | **2026** (293 days), excluded from yearly totals so it doesn't look artificially dry |
+
+## Tools
+
+| Tool | Used for |
+|---|---|
+| **SQL (PostgreSQL)** | Table design with validation rules, data quality checks, yearly/decade aggregation, trends with `regr_slope`, window functions (`RANK`, `LAG`, `LEAD`) |
+| **Python (pandas, SciPy)** | Cleaning, trend significance tests (linear regression p-values) |
+| **scikit-learn** | Forecast models, time-based train/test split, baseline comparison |
+| **matplotlib / Jupyter** | Charts and the written analysis |
+| **Next.js, Recharts, Supabase** | Interactive dashboard and prediction game |
+| **Vercel Cron** | Automated daily data updates |
 
 ## Model Evaluation: is the forecast any good?
 
@@ -41,9 +84,29 @@ Trained on 1966–2015, **tested on 2016–2026** (3,945 unseen days), and compa
 | Baseline: rain if it rained today | 66.6% |
 | **Improved: day of year + today's weather** | **68.3%** |
 
-**What I learned:** my original models reported R² = 0.76 and 66.2% accuracy, but those numbers were measured on the same data the models were trained on, with nothing to compare against. Tested properly, the original rain model was no better than always guessing "no rain", and the temperature model was beaten by "tomorrow = today". Adding today's weather fixed both, but the gain over the simple baseline is small: day-to-day weather needs real forecast inputs such as pressure and wind. A model is only useful if it beats a simple baseline.
+**What I learned:** my original models reported R² = 0.76 and 66.2% accuracy, but those numbers were measured on the data the models were trained on, with nothing to compare against. Tested on unseen years, the rain model was no better than always guessing "no rain", and the temperature model was beaten by "tomorrow = today". A model is only useful if it beats a simple baseline.
 
-## Features
+## Methodology & Limitations
+
+- **Trends** are straight-line regressions on yearly values (complete years only), with p-values to check they are not chance. Decade averages are shown because they are easier to read. The 1960s include 4 years and the 2020s 6 years.
+- **Models** use seasonal (sin/cos day-of-year) features, plus today's temperature and rain in the improved version. Splitting by time, rather than randomly, stops the model from "seeing the future".
+- **Limitations:** ERA5 is a grid, not a single station, so local extremes are underestimated. Climate cycles such as El Niño / La Niña drive year-to-year swings and are not modelled.
+- **Next steps:** compare with NIWA Auckland Airport station data, and add El Niño / La Niña phases to explain year-to-year variation.
+
+## Repository Files
+
+| File | What it contains |
+|---|---|
+| [`data/analysis.ipynb`](data/analysis.ipynb) | **Start here.** Full analysis with explanations, charts and recommendations |
+| [`sql/01_schema.sql`](sql/01_schema.sql) | Table design with validation rules |
+| [`sql/02_data_quality.sql`](sql/02_data_quality.sql) | Data quality checks |
+| [`sql/03_analysis.sql`](sql/03_analysis.sql) | Trend, decade, ranking and rain-persistence queries |
+| [`data/analyze.py`](data/analyze.py) | Script that produces the JSON files used by the dashboard |
+| [`src/`](src/) | Next.js dashboard and game |
+
+---
+
+## Dashboard & Game Features
 
 ### 📊 Analysis Dashboard
 
@@ -129,7 +192,7 @@ npm run dev
 
 ---
 
-## Data
+## Dashboard Data Pipeline
 
 **Source:** [Open-Meteo](https://open-meteo.com/) ERA5 reanalysis for Auckland (−36.94, 174.78), daily from 1966-01-01.
 The raw CSV is committed at `data/auckland_daily_era5.csv`, so every number on the site can be reproduced with one command.
@@ -175,9 +238,12 @@ Set the following environment variables in the Vercel dashboard:
 ```
 auckland-weather-app/
 ├── data/
+│   ├── analysis.ipynb          # Full written analysis (start here)
 │   ├── analyze.py              # Python analysis, trend tests + model evaluation
 │   ├── auckland_daily_era5.csv # Raw daily data (1966–2026)
 │   └── requirements.txt
+├── sql/                        # Schema, data quality checks, analysis queries
+├── docs/                       # Charts used in this README
 ├── public/data/                # Pre-generated JSON (committed)
 ├── src/
 │   ├── app/
